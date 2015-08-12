@@ -3,19 +3,25 @@ import qbs.FileInfo
 import qbs.TextFile
 
 Product {
-    type: "brainfuck"
+    type: "brainfuck_out"
     name: "BrainFuck"
     files: [ "helloworld.brainfuck" ]
 
-    Transformer {
-        inputs: "helloworld.brainfuck"
+    FileTagger {
+        patterns: "*.brainfuck"
+        fileTags: ["brainfuck"]
+    }
+
+    Rule {
+        id: brainfuck
+        inputs: ["brainfuck"]
         Artifact {
-            filePath: ".dummy" // never created
-            fileTags: "processed_file"
+            filePath: input.fileName + '.out'
+            fileTags: "brainfuck_out"
         }
         prepare: {
             var cmd = new JavaScriptCommand();
-            cmd.description = "Processing '" + input.filePath + "'";
+            cmd.description = "Processing '" + input.fileName + "'";
             cmd.highlight = "codegen";
             cmd.sourceCode = function() {
                 var file = new TextFile(input.filePath);
@@ -64,7 +70,10 @@ Product {
                         }
                     }
                 }
-                print(result);
+                file = new TextFile(output.filePath, TextFile.WriteOnly);
+                file.truncate();
+                file.write(result);
+                file.close();
             }
             return cmd;
         }
